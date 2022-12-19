@@ -10,6 +10,7 @@ interface IProps extends React.HTMLAttributes<HTMLElement> {
   themeClassName?: string;
   theme?: ITheme;
   silent?: boolean;
+  preserveNewLines?: boolean;
   onJSONPrettyError?: (e: Error) => void;
   mainStyle?: string;
   keyStyle?: string;
@@ -54,6 +55,7 @@ class JSONPretty extends React.Component<IProps, {}> {
     json: PropTypes.any,
     replacer: PropTypes.func,
     silent: PropTypes.bool,
+    preserveNewLines: PropTypes.bool,
     space: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     theme: PropTypes.object,
     themeClassName: PropTypes.string,
@@ -64,6 +66,7 @@ class JSONPretty extends React.Component<IProps, {}> {
     data: '',
     json: '',
     silent: true,
+    preserveNewLines: false,
     space: 2,
     themeClassName: '__json-pretty__',
   };
@@ -71,6 +74,7 @@ class JSONPretty extends React.Component<IProps, {}> {
   public render() {
     const {
       json, data, replacer, space, themeClassName, theme, onJSONPrettyError, onError, silent,
+      preserveNewLines,
       mainStyle,
       keyStyle,
       valueStyle,
@@ -136,11 +140,15 @@ class JSONPretty extends React.Component<IProps, {}> {
   private _pretty(theme: ITheme, obj: any, replacer: (k: string, v: any) => any, space: number, styles: any) {
     // 逐行匹配，列举：“key”: "value" | "key": value | "key": [ | "key": { | "key": [],| "Key": {},
     const regLine = /^( *)("[^"]+": )?("[^"]*"|[\w.+-]*)?([,[{]|\[\s*\],?|\{\s*\},?)?$/mg;
-    const text = JSON.stringify(obj, typeof replacer === 'function' ? replacer : null, isNaN(space) ? 2 : space);
+    let text = JSON.stringify(obj, typeof replacer === 'function' ? replacer : null, isNaN(space) ? 2 : space);
 
     /* istanbul ignore next */
     if (!text) {
       return text;
+    }
+
+    if (this.props.preserveNewLines) {
+      text = text.replace(/\\n/g, '\n');
     }
 
     return text.replace(/&/g, '&amp;').replace(/\\"([^,])/g, '\\&quot;$1')
